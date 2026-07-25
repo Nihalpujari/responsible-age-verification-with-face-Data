@@ -139,6 +139,33 @@ inject_css()
 
 
 # ----------------------------------------------------------------- model ----
+def _compat_custom_objects():
+    """Keras 3's image-preprocessing API keeps changing its keyword arguments
+    across point releases (`value_range`, `bounding_box_format`, ...). The
+    saved model was trained on a Keras that had them; the Keras Streamlit
+    Cloud installs may not. We wrap every affected layer to silently drop
+    unknown kwargs at deserialization time so the model loads regardless of
+    which Keras 3.x point release is installed."""
+    import tensorflow as tf
+    from tensorflow.keras import layers as kl
+
+    _STALE = ("value_range", "bounding_box_format")
+
+    def wrap(base):
+        class Patched(base):
+            def __init__(self, *args, **kwargs):
+                for k in _STALE:
+                    kwargs.pop(k, None)
+                super().__init__(*args, **kwargs)
+        Patched.__name__ = base.__name__
+        return Patched
+
+    names = ("RandomFlip", "RandomRotation", "RandomZoom",
+             "RandomContrast", "RandomBrightness", "RandomCrop",
+             "RandomTranslation")
+    return {n: wrap(getattr(kl, n)) for n in names if hasattr(kl, n)}
+
+
 @st.cache_resource(show_spinner="Loading model (first request only)…")
 def load_model():
     import tensorflow as tf
@@ -147,7 +174,8 @@ def load_model():
     if not candidates:
         return None, False, None
     path = candidates[0]
-    m = tf.keras.models.load_model(path, compile=False)
+    m = tf.keras.models.load_model(
+        path, compile=False, custom_objects=_compat_custom_objects())
 
     def has_rescaling(model):
         """v7 bakes Rescaling in and therefore expects raw [0,255]."""
