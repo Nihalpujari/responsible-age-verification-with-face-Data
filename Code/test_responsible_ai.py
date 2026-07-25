@@ -1,4 +1,3 @@
-%%writefile test_responsible_ai.py
 """Automated test suite — run with:
     pytest test_responsible_ai.py -v --cov=responsible_ai_utils --cov-report=term
 """
