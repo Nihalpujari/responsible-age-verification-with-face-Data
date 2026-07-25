@@ -324,7 +324,7 @@ st.markdown(f"""
 c1, c2 = st.columns([1, 1.35], gap="large")
 
 with c1:
-    st.image(face, width="stretch",
+    st.image(face, use_container_width=True,
              caption="Detected face" if found else "No face detected — full frame used")
     if not found:
         st.warning("No face was detected. Accuracy degrades on uncropped "
