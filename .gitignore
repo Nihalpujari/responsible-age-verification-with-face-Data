@@ -59,3 +59,5 @@ Thumbs.db
 # Notebook checkpoints (if any)
 # ========================
 .ipynb_checkpoints/
+# Deployment: the app needs its model file committed
+!deploy/*.keras
